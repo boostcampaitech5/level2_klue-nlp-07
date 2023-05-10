@@ -85,3 +85,4 @@ loss_type은 `focal`과 `label_smooth`, `cross_entropy`가 있습니다. 기호�
 - 측정 metric들과 processing_dataset, load_data 등 메소드들은 utils.py에 모두 놔뒀습니다.
 - auprc는 아직 추가하지 못했습니다. 추후 추가할 예정입니다.
 - pkl 파일도 혹시 몰라서 깃허브에 업로드 하지 않았습니다. 꼭 baseline 디렉토리에 추가해주세요.
+- roberta large, batch size 32 기준으로 한 에폭당 20분 정도 걸리는 걸 보니 기존 베이스라인보다 학습 속도가 빠른 것 같습니다.
