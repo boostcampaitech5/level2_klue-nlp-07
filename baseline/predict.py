@@ -24,10 +24,10 @@ if __name__ == "__main__":
     parser.add_argument("--num_labels", default=30)
     parser.add_argument("--warmup_steps", default=500)
     parser.add_argument("--loss_type", default="focal")
-    args = parser.parse_args(args=[])
     parser.add_argument("--classifier", default="default")
     parser.add_argument("--emb", default=True)
     parser.add_argument("--lr_decay", default="default")
+    args = parser.parse_args(args=[])
 
     dataloader = Dataloader(
         model_name=args.model_name,
