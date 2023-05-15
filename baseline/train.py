@@ -36,12 +36,7 @@ if __name__ == "__main__":
     parser.add_argument("--num_folds", default=2) # k-fold의 분할 수
     args = parser.parse_args(args=[])
 
-
-
-    # StratifiedKFold 사용할 경우
-    if args.use_stratified_kfold:
-
-        model = Model(
+    model = Model(
             model_name=args.model_name,
             lr=args.learning_rate,
             num_labels=args.num_labels,
@@ -51,31 +46,31 @@ if __name__ == "__main__":
             classifier=args.classifier,
             lr_decay=args.lr_decay,
         )
+    
+    wandb_logger = WandbLogger(project=args.project_name, name=args.test_name)
 
-        wandb_logger = WandbLogger(project=args.project_name, name=args.test_name)
-
-        checkpoint_callback = ModelCheckpoint(
+    checkpoint_callback = ModelCheckpoint(
             monitor="val_micro_f1",
             dirpath="./ckpt",
             filename="roberta-large-emb-lr_sched-{epoch:02d}-{val_micro_f1:.2f}",
             save_top_k=1,
             mode="max",
         )
+    
+    lr_monitor = LearningRateMonitor(logging_interval="step")
 
-        lr_monitor = LearningRateMonitor(logging_interval="step")
+    trainer = pl.Trainer(
+        accelerator="gpu",
+        max_epochs=args.max_epoch,
+        log_every_n_steps=1,
+        logger=wandb_logger,
+        callbacks=[checkpoint_callback, lr_monitor],
+    )
+    
+    os.makedirs("./ckpt", exist_ok=True)
 
-        trainer = pl.Trainer(
-            accelerator="gpu",
-            max_epochs=args.max_epoch,
-            log_every_n_steps=1,
-            logger=wandb_logger,
-            callbacks=[checkpoint_callback, lr_monitor],
-        )
-
-        os.makedirs("./ckpt", exist_ok=True)
-
-
-
+    # StratifiedKFold 사용할 경우
+    if args.use_stratified_kfold:
 
         num_folds = args.num_folds
         skf = StratifiedKFold(n_splits=num_folds, shuffle=True, random_state=42) # StratifiedKFold 객체 선언
@@ -84,7 +79,6 @@ if __name__ == "__main__":
         indices = list(range(len(train_dataset)))        
         labels = train_dataset["label"].values
         folds = list(skf.split(indices, labels))  # labels 를 보고 분포에 맞게 skf 객체가 indices를 나눠준다 (train_index, val_index) 형태로 반환
-
 
         # k-fold 만큼 반복
         for fold, (train_index, val_index) in enumerate(folds):
@@ -105,9 +99,7 @@ if __name__ == "__main__":
                 val_indices=val_index,
             )
 
-            trainer.fit(model=model, datamodule=fold_dataloader)
-
-
+            trainer.fit(model=model, datamodule=fold_dataloader)     
     
     else:
 
@@ -126,36 +118,5 @@ if __name__ == "__main__":
             val_indices=None, # StratifiedKFold 시엔 None
         )
 
-        model = Model(
-            model_name=args.model_name,
-            lr=args.learning_rate,
-            num_labels=args.num_labels,
-            warmup_steps=args.warmup_steps,
-            max_training_step=args.max_epoch * 900,
-            loss_type=args.loss_type,
-            classifier=args.classifier,
-            lr_decay=args.lr_decay,
-        )
-
-        wandb_logger = WandbLogger(project=args.project_name, name=args.test_name)
-
-        checkpoint_callback = ModelCheckpoint(
-            monitor="val_micro_f1",
-            dirpath="./ckpt",
-            filename="roberta-large-emb-lr_sched-{epoch:02d}-{val_micro_f1:.2f}",
-            save_top_k=1,
-            mode="max",
-        )
-
-        lr_monitor = LearningRateMonitor(logging_interval="step")
-
-        trainer = pl.Trainer(
-            accelerator="gpu",
-            max_epochs=args.max_epoch,
-            log_every_n_steps=1,
-            logger=wandb_logger,
-            callbacks=[checkpoint_callback, lr_monitor],
-        )
-
-        os.makedirs("./ckpt", exist_ok=True)
-        trainer.fit(model=model, datamodule=dataloader)        
+        trainer.fit(model=model, datamodule=dataloader)     
+        
