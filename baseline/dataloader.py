@@ -34,6 +34,7 @@ class Dataloader(pl.LightningDataModule):
         dev_path,
         test_path,
         predict_path,
+        emb,
     ):
         super().__init__()
         # tokenizer 로드
@@ -52,13 +53,18 @@ class Dataloader(pl.LightningDataModule):
         self.test_dataset = None
         self.predict_dataset = None
 
+        self.emb = emb
+
     def preprocessing(self, data_path, stage):
         dataset = load_data(data_path)
         if stage == "predict":
             label = []
         else:
             label = label_to_num(dataset["label"].values)
-        dataset_token = tokenized_dataset(dataset, self.tokenizer)
+        if self.emb:
+            dataset_token = emb_tokenized_dataset(dataset, self.tokenizer)
+        else:
+            dataset_token = tokenized_dataset(dataset, self.tokenizer)
         return dataset_token, label
 
     def setup(self, stage="fit"):

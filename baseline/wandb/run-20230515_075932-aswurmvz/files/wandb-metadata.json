@@ -1,0 +1,85 @@
+{
+    "os": "Linux-4.4.0-59-generic-x86_64-with-glibc2.10",
+    "python": "3.8.5",
+    "heartbeatAt": "2023-05-15T07:59:33.102430",
+    "startedAt": "2023-05-15T07:59:32.235174",
+    "docker": null,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "train.py",
+    "codePath": "baseline/train.py",
+    "git": {
+        "remote": "https://github.com/boostcampaitech5/level2_klue-nlp-07.git",
+        "commit": "8322b39dc79bc443feb4402e294d9e36304361cb"
+    },
+    "email": null,
+    "root": "/opt/ml/level2_klue-nlp-07",
+    "host": "a697d8aa2396",
+    "username": "root",
+    "executable": "/opt/conda/bin/python",
+    "cpu_count": 8,
+    "cpu_count_logical": 8,
+    "cpu_freq": {
+        "current": 2200.026,
+        "min": 0.0,
+        "max": 0.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 2200.026,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2200.026,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2200.026,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2200.026,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2200.026,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2200.026,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2200.026,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2200.026,
+            "min": 0.0,
+            "max": 0.0
+        }
+    ],
+    "disk": {
+        "total": 98.30496215820312,
+        "used": 72.38666915893555
+    },
+    "gpu": "Tesla V100-PCIE-32GB",
+    "gpu_count": 1,
+    "gpu_devices": [
+        {
+            "name": "Tesla V100-PCIE-32GB",
+            "memory_total": 34089730048
+        }
+    ],
+    "memory": {
+        "total": 88.50595092773438
+    }
+}

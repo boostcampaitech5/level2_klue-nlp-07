@@ -5,22 +5,40 @@ from loss import FocalLoss
 from torch.optim.lr_scheduler import LambdaLR
 from torch import nn
 from utils import *
+from emb_model import CustomRobertaForSequenceClassification
+from functools import partial
 
 
 class Model(pl.LightningModule):
-    def __init__(self, model_name, lr, num_labels, warmup_steps, loss_type):
+    def __init__(
+        self,
+        model_name,
+        lr,
+        num_labels,
+        warmup_steps,
+        max_training_step,
+        loss_type,
+        classifier,
+        lr_decay,
+    ):
         super().__init__()
         self.save_hyperparameters()
 
         self.model_name = model_name
         self.lr = lr
         self.warmup_steps = warmup_steps
+        self.max_training_step = max_training_step
+        self.lr_decay = lr_decay
 
         model_config = AutoConfig.from_pretrained(model_name)
         model_config.num_labels = num_labels
+        model_config.classifier = classifier
 
         # 사용할 모델을 호출합니다.
-        self.plm = AutoModelForSequenceClassification.from_pretrained(
+        # self.plm = AutoModelForSequenceClassification.from_pretrained(
+        #     model_name, config=model_config
+        # )
+        self.plm = CustomRobertaForSequenceClassification.from_pretrained(
             model_name, config=model_config
         )
         # Loss 계산을 위해 사용될 L1Loss를 호출합니다.
@@ -31,23 +49,31 @@ class Model(pl.LightningModule):
         elif loss_type == "cross_entropy":
             self.loss_func = nn.CrossEntropyLoss()
 
-    def forward(self, x):
-        x = self.plm(x)["logits"]
+    def forward(self, inputs):
+        logits = self.plm(
+            input_ids=inputs["input_ids"],
+            attention_mask=inputs["attention_mask"],
+            entity_loc_ids=inputs["entity_loc_ids"],
+        )
+        # print(logits)
 
-        return x
+        # x = self.plm(x)[0]
+
+        return logits
 
     def training_step(self, batch, batch_idx):
-        inputs = batch["input_ids"]
+        inputs = batch
         labels = batch["labels"]
         probs = self(inputs)
-
-        loss = self.loss_func(probs.view(-1, 30), labels.view(-1))
+        preds = probs.argmax(-1)
+        # print(preds)
+        loss = self.loss_func(probs, labels.view(-1))
         self.log("train_loss", loss)
 
         return loss
 
     def validation_step(self, batch, batch_idx):
-        inputs = batch["input_ids"]
+        inputs = batch
         labels = batch["labels"]
         logits = self(inputs)
 
@@ -63,27 +89,51 @@ class Model(pl.LightningModule):
         return loss
 
     def test_step(self, batch, batch_idx):
-        x = batch["input_ids"]
+        x = batch
         labels = batch["labels"]
         probs = self(x)
 
         # self.log("test_auprc", klue_re_auprc(probs, labels))
 
     def predict_step(self, batch, batch_idx):
-        inputs = batch["input_ids"]
+        inputs = batch
         logits = self(inputs)
         preds = logits.view(-1, 30).argmax(-1)
         result = {"preds": preds, "probs": logits}
         return result
 
+    # 참고 자료 : https://lightning.ai/docs/pytorch/latest/common/optimization.html
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(self.parameters(), lr=self.lr)
 
-        #         def warmup_scheduler(step):
-        #             warmup_factor = min(1.0, step / self.warmup_steps)
-        #             return warmup_factor * self.lr
+        def lr_exp_function(step: int, warmup_step: int, max_training_step: int):
+            if step <= warmup_step:
+                return step / warmup_step
+            else:
+                return 0.01 ** (
+                    (step - warmup_step) / (max_training_step - warmup_step)
+                )
 
-        #         scheduler = LambdaLR(optimizer, lr_lambda=warmup_scheduler)
+        def lr_function(step: int, warmup_step: int, max_training_step: int):
+            if step <= warmup_step:
+                return step / warmup_step
+            else:
+                return 1 - (step - warmup_step) / (max_training_step - warmup_step)
 
-        #         return [optimizer], [scheduler]
-        return optimizer
+        if self.lr_decay == "exp":
+            function = lr_exp_function
+        else:
+            function = lr_function
+
+        warmup_scheduler = torch.optim.lr_scheduler.LambdaLR(
+            optimizer,
+            lr_lambda=partial(
+                function,
+                warmup_step=self.warmup_steps,
+                max_training_step=self.max_training_step,
+            ),
+        )
+
+        return [optimizer], [
+            {"scheduler": warmup_scheduler, "interval": "step", "name": "warmup+decay"}
+        ]
