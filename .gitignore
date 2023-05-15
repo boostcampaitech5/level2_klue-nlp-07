@@ -162,3 +162,4 @@ cython_debug/
 *.pkl
 *.ckpt
 *.pt
+./baseline/wandb
