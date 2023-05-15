@@ -40,18 +40,9 @@ if __name__ == "__main__":
         emb=args.emb,
     )
 
-    model = Model(
-        model_name=args.model_name,
-        lr=args.learning_rate,
-        num_labels=args.num_labels,
-        warmup_steps=args.warmup_steps,
-        loss_type=args.loss_type,
-        classifier=args.classifier,
-        max_training_step=args.max_epoch * 100,
-        lr_decay=args.lr_decay,
+    model = Model.load_from_checkpoint(
+        "./ckpt/roberta-large-emb-lr_sched(exp)-epoch=05-val_micro_f1=86.56.ckpt"
     )
-    checkpoint = torch.load("./ckpt/roberta-large-epoch=03-val_micro_f1=86.25.ckpt")
-    model.load_state_dict(checkpoint["state_dict"])
 
     trainer = pl.Trainer(
         accelerator="gpu", max_epochs=args.max_epoch, log_every_n_steps=1, logger=False
