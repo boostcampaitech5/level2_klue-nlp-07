@@ -25,6 +25,9 @@ if __name__ == "__main__":
     parser.add_argument("--warmup_steps", default=500)
     parser.add_argument("--loss_type", default="focal")
     args = parser.parse_args(args=[])
+    parser.add_argument("--classifier", default="default")
+    parser.add_argument("--emb", default=True)
+    parser.add_argument("--lr_decay", default="default")
 
     dataloader = Dataloader(
         model_name=args.model_name,
@@ -34,6 +37,7 @@ if __name__ == "__main__":
         dev_path=args.dev_path,
         test_path=args.test_path,
         predict_path=args.predict_path,
+        emb=args.emb,
     )
 
     model = Model(
@@ -42,6 +46,9 @@ if __name__ == "__main__":
         num_labels=args.num_labels,
         warmup_steps=args.warmup_steps,
         loss_type=args.loss_type,
+        classifier=args.classifier,
+        max_training_step=args.max_epoch * 100,
+        lr_decay=args.lr_decay,
     )
     checkpoint = torch.load("./ckpt/roberta-large-epoch=03-val_micro_f1=86.25.ckpt")
     model.load_state_dict(checkpoint["state_dict"])
