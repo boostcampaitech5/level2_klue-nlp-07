@@ -1,0 +1,1 @@
+{"warmup+decay": 4e-08, "trainer/global_step": 2, "_timestamp": 1684137580.3752964, "_runtime": 8.131006240844727, "_step": 4, "train_loss": 3.1453564167022705, "epoch": 0, "_wandb": {"runtime": 8}}

@@ -24,6 +24,9 @@ if __name__ == "__main__":
     parser.add_argument("--num_labels", default=30)
     parser.add_argument("--warmup_steps", default=500)
     parser.add_argument("--loss_type", default="focal")
+    parser.add_argument("--classifier", default="default")
+    parser.add_argument("--emb", default=True)
+    parser.add_argument("--lr_decay", default="default")
     args = parser.parse_args(args=[])
 
     dataloader = Dataloader(
@@ -34,17 +37,12 @@ if __name__ == "__main__":
         dev_path=args.dev_path,
         test_path=args.test_path,
         predict_path=args.predict_path,
+        emb=args.emb,
     )
 
-    model = Model(
-        model_name=args.model_name,
-        lr=args.learning_rate,
-        num_labels=args.num_labels,
-        warmup_steps=args.warmup_steps,
-        loss_type=args.loss_type,
+    model = Model.load_from_checkpoint(
+        "./ckpt/roberta-large-emb-lr_sched(exp)-epoch=05-val_micro_f1=86.56.ckpt"
     )
-    checkpoint = torch.load("./ckpt/roberta-large-epoch=03-val_micro_f1=86.25.ckpt")
-    model.load_state_dict(checkpoint["state_dict"])
 
     trainer = pl.Trainer(
         accelerator="gpu", max_epochs=args.max_epoch, log_every_n_steps=1, logger=False
