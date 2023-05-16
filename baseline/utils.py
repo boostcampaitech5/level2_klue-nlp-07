@@ -219,82 +219,78 @@ def load_data(dataset_dir):
     return dataset
 
 
-def tokenized_dataset(dataset, tokenizer):
+def tokenized_dataset(dataset, tokenizer, emb, only_entity):
     """tokenizer에 따라 sentence를 tokenizing 합니다."""
     concat_entity = []
     for e01, e02 in zip(dataset["subject_entity"], dataset["object_entity"]):
         temp = ""
         temp = e01 + "[SEP]" + e02
         concat_entity.append(temp)
-    tokenized_sentences = tokenizer(
-        concat_entity,
-        list(dataset["sentence"]),
-        return_tensors="pt",
-        padding=True,
-        truncation=True,
-        max_length=256,
-        add_special_tokens=True,
-    )
-    return tokenized_sentences
 
+    if only_entity:
+        tokenized_sentences = tokenizer(
+            concat_entity,
+            return_tensors="pt",
+            padding=True,
+            truncation=True,
+            max_length=256,
+            add_special_tokens=True,
+        )
 
-def emb_tokenized_dataset(dataset, tokenizer):
-    """tokenizer에 따라 sentence를 tokenizing 합니다."""
-    concat_entity = []
-    for e01, e02 in zip(dataset["subject_entity"], dataset["object_entity"]):
-        temp = ""
-        temp = e01 + "[SEP]" + e02
-        concat_entity.append(temp)
-    tokenized_sentences = tokenizer(
-        concat_entity,
-        list(dataset["sentence"]),
-        return_tensors="pt",
-        padding=True,
-        truncation=True,
-        max_length=256,
-        add_special_tokens=True,
-    )
+    if not only_entity:
+        tokenized_sentences = tokenizer(
+            concat_entity,
+            list(dataset["sentence"]),
+            return_tensors="pt",
+            padding=True,
+            truncation=True,
+            max_length=256,
+            add_special_tokens=True,
+        )
 
-    entity_loc_ids = []
-    for input_token, e01, e02 in zip(
-        tokenized_sentences["input_ids"],
-        dataset["subject_entity"],
-        dataset["object_entity"],
-    ):
-        subj_token_ids = torch.Tensor(tokenizer(e01)["input_ids"][2:-2])
-        obj_token_ids = torch.Tensor(tokenizer(e02)["input_ids"][2:-2])
+    if emb:
+        entity_loc_ids = []
+        for input_token, e01, e02 in zip(
+            tokenized_sentences["input_ids"],
+            dataset["subject_entity"],
+            dataset["object_entity"],
+        ):
+            subj_token_ids = torch.Tensor(tokenizer(e01)["input_ids"][2:-2])
+            obj_token_ids = torch.Tensor(tokenizer(e02)["input_ids"][2:-2])
 
-        subj_start_ids = []
-        for idx in range(len(input_token) - len(subj_token_ids)):
-            if torch.equal(
-                input_token[idx : idx + len(subj_token_ids)], subj_token_ids
-            ):
-                subj_start_ids.append((idx, len(subj_token_ids)))
-                if len(subj_start_ids) == 2:
-                    break
+            subj_start_ids = []
+            for idx in range(len(input_token) - len(subj_token_ids)):
+                if torch.equal(
+                    input_token[idx : idx + len(subj_token_ids)], subj_token_ids
+                ):
+                    subj_start_ids.append((idx, len(subj_token_ids)))
+                    if len(subj_start_ids) == 2:
+                        break
 
-        obj_start_ids = []
-        for idx in range(len(input_token) - len(obj_token_ids)):
-            if torch.equal(input_token[idx : idx + len(obj_token_ids)], obj_token_ids):
-                obj_start_ids.append((idx, len(obj_token_ids)))
-                if len(obj_start_ids) == 2:
-                    break
+            obj_start_ids = []
+            for idx in range(len(input_token) - len(obj_token_ids)):
+                if torch.equal(
+                    input_token[idx : idx + len(obj_token_ids)], obj_token_ids
+                ):
+                    obj_start_ids.append((idx, len(obj_token_ids)))
+                    if len(obj_start_ids) == 2:
+                        break
 
-        entity_loc = [0] * len(input_token)
-        for subj_start in subj_start_ids:
-            start, length = subj_start
-            for idx in range(start, start + length):
-                entity_loc[idx] = 1
+            entity_loc = [0] * len(input_token)
+            for subj_start in subj_start_ids:
+                start, length = subj_start
+                for idx in range(start, start + length):
+                    entity_loc[idx] = 1
 
-        for obj_start in obj_start_ids:
-            start, length = obj_start
-            for idx in range(start, start + length):
-                entity_loc[idx] = 2
+            for obj_start in obj_start_ids:
+                start, length = obj_start
+                for idx in range(start, start + length):
+                    entity_loc[idx] = 2
 
-        entity_loc_ids.append(entity_loc)
+            entity_loc_ids.append(entity_loc)
 
-    tokenized_sentences["entity_loc_ids"] = torch.tensor(
-        entity_loc_ids, dtype=torch.int32
-    )
+        tokenized_sentences["entity_loc_ids"] = torch.tensor(
+            entity_loc_ids, dtype=torch.int32
+        )
 
     return tokenized_sentences
