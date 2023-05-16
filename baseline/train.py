@@ -8,17 +8,23 @@ import os
 from sklearn.model_selection import StratifiedKFold
 import pandas as pd
 from omegaconf import OmegaConf
+from transformers import set_seed
 
 
 if __name__ == "__main__":
 
     conf = OmegaConf.load("./config.yaml")
 
+    # seed 고정
+    if conf.params.seed > 0:
+        set_seed(conf.params.seed)
+
     model = Model(
             model_name=conf.model_name,
             lr=conf.params.learning_rate,
             num_labels=conf.params.num_labels,
-            warmup_steps=conf.params.warmup_steps,
+            warmup_steps=conf.params.warmup_steps,       
+            warmup_ratio=conf.params.warmup_ratio,     
             max_training_step=conf.params.max_epoch * 900,
             loss_type=conf.params.loss_type,
             classifier=conf.params.classifier,
