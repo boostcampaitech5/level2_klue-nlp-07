@@ -1,0 +1,30 @@
+# config.yaml
+path:
+  train_path: ../dataset/train/train_split.csv  # 전처리만 한 origin trainset
+  dev_path: ../dataset/dev/dev.csv
+  test_path: ../dataset/dev/dev.csv
+  predict_path: ../dataset/test/test_data.csv
+  origin_train_path: ../dataset/train/train_preprocessing.csv
+
+model_name: klue/roberta-large
+
+params:
+  batch_size: 32                   # batch size
+  max_epoch: 10                   # max epoch
+  shuffle: True                    # shuffle dataset
+  num_train_epochs: 1              # total number of training epochs
+  learning_rate: !!float 1e-5               # learning_rate  
+  weight_decay: 0.01               # strength of weight decay
+  logging_dir: "./logs"            # directory for storing logs
+  logging_steps: 100              # log saving step.
+  eval_steps: 500            # evaluation step.
+  project_name: refactoring # wandb project name
+  test_name: roberta-large-emb-lr_sched-focal-entity
+  num_labels: 30 
+  warmup_steps: 500                # number of warmup steps for learning rate scheduler
+  loss_type: focal # "focal" or "cross_entropy"
+  classifier: default # "default" or "entity"
+  emb: True # True or False
+  lr_decay: default # "default" or "cosine"
+  use_stratified_kfold: False # True or False
+  num_folds: 2 
