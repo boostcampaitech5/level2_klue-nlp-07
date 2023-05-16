@@ -42,15 +42,7 @@ if __name__ == "__main__":
         )
     
     lr_monitor = LearningRateMonitor(logging_interval="step")
-
-    trainer = pl.Trainer(
-        accelerator="gpu",
-        max_epochs=conf.params.max_epoch,
-        log_every_n_steps=1,
-        logger=wandb_logger,
-        callbacks=[checkpoint_callback, lr_monitor],
-    )
-    
+ 
     os.makedirs("./ckpt", exist_ok=True)
 
     # StratifiedKFold 사용할 경우
@@ -67,6 +59,15 @@ if __name__ == "__main__":
         # k-fold 만큼 반복
         for fold, (train_index, val_index) in enumerate(folds):
             print(f"Training Fold {fold + 1}/{num_folds}")
+
+            # fold 별로 trainer, dataloader 객체를 새로 만들어준다
+            trainer = pl.Trainer(
+                accelerator="gpu",
+                max_epochs=conf.params.max_epoch,
+                log_every_n_steps=1,
+                logger=wandb_logger,
+                callbacks=[checkpoint_callback, lr_monitor],
+            )
 
             fold_dataloader = Dataloader(
                 model_name=conf.model_name,
@@ -86,6 +87,14 @@ if __name__ == "__main__":
             trainer.fit(model=model, datamodule=fold_dataloader)     
     
     else:
+
+        trainer = pl.Trainer(
+            accelerator="gpu",
+            max_epochs=conf.params.max_epoch,
+            log_every_n_steps=1,
+            logger=wandb_logger,
+            callbacks=[checkpoint_callback, lr_monitor],
+        )        
 
         dataloader = Dataloader(
             model_name=conf.model_name,
