@@ -5,7 +5,7 @@ import pickle as pickle
 import pandas as pd
 import torch
 import re
-
+   
 
 def klue_re_micro_f1(preds, labels):
     """KLUE-RE micro f1 (except no_relation)"""
@@ -133,6 +133,8 @@ def preprocessing_dataset(dataset):
     subject_entity = []
     object_entity = []
     entity_sentence = []
+    subject_entity_span = []
+    object_entity_span = []
     for sen, i, j in zip(
         dataset["sentence"], dataset["subject_entity"], dataset["object_entity"]
     ):
@@ -142,13 +144,17 @@ def preprocessing_dataset(dataset):
         subj_end_idx = int(re.sub(r"[^0-9]", "", i[1:-1].split("'end_idx': ")[1][0:3]))
         subj_type = i[-5:-2]
         # subj.append((subj_start_idx,subj_end_idx,subj_type))
-
+        
+        subj_extra_len = 3 + len(subj_type)
+        subject_entity_span.append((subj_start_idx+subj_extra_len,subj_end_idx+subj_extra_len+1))
         obj_start_idx = int(
             re.sub(r"[^0-9]", "", j[1:-1].split("'start_idx': ")[1][0:3])
         )
         obj_end_idx = int(re.sub(r"[^0-9]", "", j[1:-1].split("'end_idx': ")[1][0:3]))
         obj_type = j[-5:-2]
-
+        
+        obj_extra_len = subj_extra_len + 4 + len(obj_type)
+        object_entity_span.append((obj_start_idx+obj_extra_len, obj_end_idx+obj_extra_len+1))
         i = i[1:-1].split(",")[0].split(":")[1]
         j = j[1:-1].split(",")[0].split(":")[1]
 
@@ -204,7 +210,9 @@ def preprocessing_dataset(dataset):
             "id": dataset["id"],
             "sentence": entity_sentence,
             "subject_entity": subject_entity,
+            "subject_entity_span": subject_entity_span,
             "object_entity": object_entity,
+            "object_entity_span": object_entity_span,
             "label": dataset["label"],
         }
     )
@@ -297,4 +305,22 @@ def emb_tokenized_dataset(dataset, tokenizer):
         entity_loc_ids, dtype=torch.int32
     )
 
+    return tokenized_sentences
+
+def luke_tokenized_dataset(dataset, tokenizer):
+    """tokenizer에 따라 sentence를 tokenizing 합니다."""
+    entity_spans = []
+    
+    for subj_span, obj_span in zip(dataset["subject_entity_span"], dataset["object_entity_span"]):
+        entity_spans.append([subj_span, obj_span])
+        
+    tokenized_sentences = tokenizer(
+        list(dataset["sentence"]),
+        entity_spans=entity_spans,
+        return_tensors="pt",
+        padding=True,
+        truncation=True,
+        max_length=256,
+        add_special_tokens=True,
+    )
     return tokenized_sentences
