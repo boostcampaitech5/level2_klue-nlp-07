@@ -38,6 +38,49 @@ if __name__ == "__main__":
  
         conf.params.warmup_steps = int( total_steps * conf.params.warmup_ratio)
         
+    # ----------------- sweep -----------------
+    # sweep 사용시에만 실행
+    sweep_conf = OmegaConf.load("./sweep.yaml")
+
+    # sweep이 넣어주는 cli 로부터 받아올 인자를 담을 set
+    update_config_set = set()
+
+    # cli 로 들어오는 인자를 받아옵니다. (sweep.yaml 의 parameter 내부 depth 만 가져오도록 구현))
+    for key, value in sweep_conf.items():       
+        if "parameters" == key:
+            for sub_key, sub_value in value.items():  
+                update_config_set.add(sub_key) 
+
+
+    # parser 를 통해 sweep이 전달하는 cli 를 받아오도록 처리
+    parser = argparse.ArgumentParser()
+
+    # update_config_set 에 대해서만 arg를 만들어준다.
+    for arg in update_config_set:                        
+        if arg in ["model_name", "loss_type", "classifier", "lr_decay"]:
+            parser.add_argument(f"--{arg}", type=str, default=None)
+        elif arg in ["batch_size", "max_epoch", "num_labels", "warmup_steps", "num_folds", "seed"]:
+            parser.add_argument(f"--{arg}", type=int, default=None)
+        elif arg in ["learning_rate", "weight_decay", "warmup_ratio"]:
+            parser.add_argument(f"--{arg}", type=float, default=None)
+        elif arg in ["shuffle", "emb"]:
+            parser.add_argument(f"--{arg}", type=bool, default=None)
+    
+
+    args = parser.parse_args()
+
+    # 기존 conf에 args 덮어씌움으로써 sweep의 내용들이 전달 될 수 있도록 처리 한다. 
+    for arg in update_config_set:
+        if getattr(args, arg) is not None:
+            print(getattr(args, arg))
+
+            if "model_name" == arg:
+                conf.model_name = getattr(args, arg)
+            else:
+                conf.params.__setattr__(arg, getattr(args, arg))  
+
+    # ----------------- sweep -----------------
+
     model = Model(
             model_name=conf.model_name,
             lr=conf.params.learning_rate,
@@ -50,6 +93,7 @@ if __name__ == "__main__":
         )
     
     wandb_logger = WandbLogger(project=conf.params.project_name, name=conf.params.test_name)
+
 
     checkpoint_callback = ModelCheckpoint(
             monitor="val_micro_f1",
