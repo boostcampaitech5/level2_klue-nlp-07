@@ -28,12 +28,12 @@ if __name__ == "__main__":
             train_df = pd.read_csv(conf.path.origin_train_path) # 학습 데이터
 
             # ((num_folds-1) x num_folds) 를 곱해줘야 함.
-            # max_training_steps = 학습 데이터 개수 / 배치사이즈 x max_epoch / ((num_folds-1) x num_folds)
+            # 총 스텝 수 = 학습 데이터 개수 / 배치사이즈 x max_epoch / ((num_folds-1) x num_folds)
             total_steps = math.ceil((len(train_df) // conf.params.batch_size) * conf.params.max_epoch * ((conf.params.num_folds - 1) / conf.params.num_folds))
 
         else:
             train_df = pd.read_csv(conf.path.train_path) # 학습 데이터            
-            # max_training_steps = 학습 데이터 개수 / 배치사이즈 x max_epoch
+            # 총 스텝 수 = 학습 데이터 개수 / 배치사이즈 x max_epoch
             total_steps = (len(train_df) // conf.params.batch_size) *  conf.params.max_epoch 
  
         conf.params.warmup_steps = int( total_steps * conf.params.warmup_ratio)
