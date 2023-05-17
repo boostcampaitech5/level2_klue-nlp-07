@@ -14,6 +14,10 @@ import math
 
 if __name__ == "__main__":
 
+    print("*" * 100)
+    print("train_sweep.py")
+    print("*" * 100)
+
     conf = OmegaConf.load("./config.yaml")
 
     # seed 고정
