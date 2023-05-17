@@ -84,7 +84,7 @@ if __name__ == "__main__":
             lr=conf.params.learning_rate,
             num_labels=conf.params.num_labels,
             warmup_steps=conf.params.warmup_steps,        
-            max_training_step=conf.params.max_epoch * 900,
+            max_training_step=total_steps,
             loss_type=conf.params.loss_type,
             classifier=conf.params.classifier,
             lr_decay=conf.params.lr_decay,
