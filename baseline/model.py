@@ -1,6 +1,6 @@
 import pytorch_lightning as pl
 import torch
-from transformers import AutoConfig, AutoModelForSequenceClassification
+from transformers import AutoConfig, AutoModelForSequenceClassification, LukeForEntityPairClassification
 from loss import FocalLoss
 from torch.optim.lr_scheduler import LambdaLR
 from torch import nn
@@ -13,14 +13,14 @@ class Model(pl.LightningModule):
     def __init__(
         self,
         model_name,
-        lr,
-        num_labels,
-        warmup_steps,
-        warmup_ratio,
-        max_training_step,
-        loss_type,
-        classifier,
-        lr_decay,
+        lr=float(2e-5),
+        num_labels=30,
+        warmup_steps=500,
+        warmup_ratio=-1.0,
+        max_training_step=4500,
+        loss_type="focal",
+        classifier="default",
+        lr_decay="default",
     ):
         super().__init__()
         self.save_hyperparameters()
@@ -40,9 +40,12 @@ class Model(pl.LightningModule):
         # self.plm = AutoModelForSequenceClassification.from_pretrained(
         #     model_name, config=model_config
         # )
-        self.plm = CustomRobertaForSequenceClassification.from_pretrained(
+        if "luke" in model_name:
+            self.plm = LukeForEntityPairClassification.from_pretrained(model_name, config=model_config)
+        else:
+            self.plm = CustomRobertaForSequenceClassification.from_pretrained(
             model_name, config=model_config
-        )
+            )
         # Loss 계산을 위해 사용될 L1Loss를 호출합니다.
         if loss_type == "focal":
             self.loss_func = FocalLoss()
@@ -52,11 +55,14 @@ class Model(pl.LightningModule):
             self.loss_func = nn.CrossEntropyLoss()
 
     def forward(self, inputs):
-        logits = self.plm(
-            input_ids=inputs["input_ids"],
-            attention_mask=inputs["attention_mask"],
-            entity_loc_ids=inputs["entity_loc_ids"],
-        )
+        if "luke" in self.model_name:
+            logits = self.plm(**inputs).logits
+        else:
+            logits = self.plm(
+                input_ids=inputs["input_ids"],
+                attention_mask=inputs["attention_mask"],
+                entity_loc_ids=inputs["entity_loc_ids"],
+            )
         # print(logits)
 
         # x = self.plm(x)[0]

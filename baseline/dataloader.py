@@ -28,17 +28,17 @@ class Dataloader(pl.LightningDataModule):
     def __init__(
         self,
         model_name,
-        batch_size,
-        shuffle,
-        origin_train_path,  # 전처리만 한 origin trainset
-        train_path,
-        dev_path,
-        test_path,
-        predict_path,
-        emb,
-        use_stratified_kfold,  # StratifiedKFold 시엔 True
-        train_indices,  # StratifiedKFold 시 필요한 trainset 인덱스
-        val_indices,  # StratifiedKFold 시 필요한 valiset 인덱스
+        batch_size=32,
+        shuffle=True,
+        origin_train_path="../dataset/train/train_preprocessing.csv",  # 전처리만 한 origin trainset
+        train_path="../dataset/train/train_split.csv",
+        dev_path="../dataset/dev/dev.csv",
+        test_path="../dataset/dev/dev.csv",
+        predict_path="../dataset/test/test_data.csv",
+        emb=True,
+        use_stratified_kfold=False,  # StratifiedKFold 시엔 True
+        train_indices=None,  # StratifiedKFold 시 필요한 trainset 인덱스
+        val_indices=None,  # StratifiedKFold 시 필요한 valiset 인덱스
     ):
         super().__init__()
         # tokenizer 로드
@@ -70,10 +70,13 @@ class Dataloader(pl.LightningDataModule):
             label = []
         else:
             label = label_to_num(dataset["label"].values)
-        if self.emb:
-            dataset_token = emb_tokenized_dataset(dataset, self.tokenizer)
+        if "luke" in self.model_name:
+            dataset_token = luke_tokenized_dataset(dataset, self.tokenizer)
         else:
-            dataset_token = tokenized_dataset(dataset, self.tokenizer)
+            if self.emb:
+                dataset_token = emb_tokenized_dataset(dataset, self.tokenizer)
+            else:
+                dataset_token = tokenized_dataset(dataset, self.tokenizer)
         return dataset_token, label
 
     # k-fold 시엔 즉석으로 dataset을 만들어서 사용하기 때문에 별도 함수 만들어 줍니다.
@@ -84,10 +87,13 @@ class Dataloader(pl.LightningDataModule):
             label = []
         else:
             label = label_to_num(dataset["label"].values)
-        if self.emb:
-            dataset_token = emb_tokenized_dataset(dataset, self.tokenizer)
+        if "luke" in self.model_name:
+            dataset_token = luke_tokenized_dataset(dataset, self.tokenizer)
         else:
-            dataset_token = tokenized_dataset(dataset, self.tokenizer)
+            if self.emb:
+                dataset_token = emb_tokenized_dataset(dataset, self.tokenizer)
+            else:
+                dataset_token = tokenized_dataset(dataset, self.tokenizer)
 
         return dataset_token, label
 
