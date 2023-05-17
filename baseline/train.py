@@ -10,11 +10,14 @@ import pandas as pd
 from omegaconf import OmegaConf
 from transformers import set_seed
 import math
-
+from utils import validate_conf
 
 if __name__ == "__main__":
 
     conf = OmegaConf.load("./config.yaml")
+
+    # conf validation
+    validate_conf(conf)
 
     # seed 고정
     if conf.params.seed > 0:
