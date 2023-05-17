@@ -36,7 +36,7 @@ if __name__ == "__main__":
     checkpoint_callback = ModelCheckpoint(
         monitor="val_micro_f1",
         dirpath="./ckpt",
-        filename="roberta-large-emb-lr_sched-{epoch:02d}-{val_micro_f1:.2f}",
+        filename="roberta-large-re-emb-lr_sched(exp)-{epoch:02d}-{val_micro_f1:.2f}",
         save_top_k=1,
         mode="max",
     )

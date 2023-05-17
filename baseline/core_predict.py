@@ -56,7 +56,7 @@ if __name__ == "__main__":
     conf = OmegaConf.load("./config.yaml")
 
     model = Model.load_from_checkpoint(
-        "./ckpt/roberta-large-emb-lr_sched(exp)-kfold4-epoch=04-val_micro_f1=86.36.ckpt"
+        "./ckpt/roberta-large-re-emb-lr_sched(exp)-epoch=05-val_micro_f1=85.43.ckpt"
     )
 
     klue_prediction = get_prediction(model=model, only_entity=False)
@@ -64,18 +64,26 @@ if __name__ == "__main__":
 
     entity_prediction = get_prediction(model=model, only_entity=True)
     entity_preds, mask_1 = get_labels_and_probs(entity_prediction)
+    
     mask_2 = []
     for _ in range(len(mask_1)):
         mask_2.append([1] + [0] * 29)
 
     mask_1 = np.array(mask_1)
+    with open("./mask_1.pkl", "wb") as f:
+        pickle.dump(mask_1, f)
     mask_2 = np.array(mask_2)
     with open("./test_label_constraints.pkl", "rb") as f:
         label_constraints = pickle.load(f)
-
+    
+    df = pd.DataFrame()
+    df['klue_prob'] = klue_probs
+    df['klue_prob_mask'] = mask_1.tolist()
+    df.to_csv('core_data.csv', index=False)
+    
     lamb_1 = -1.6
     lamb_2 = 0.3
-
+    
     new_probs = klue_probs + lamb_1 * mask_1 + lamb_2 * mask_2 + label_constraints
 
     new_probs = softmax(new_probs, axis=1)
@@ -85,4 +93,4 @@ if __name__ == "__main__":
     submission = pd.read_csv("./submission/sample_submission.csv")
     submission["pred_label"] = new_preds
     submission["probs"] = new_probs
-    submission.to_csv("./submission/core_result.csv", index=False)
+    # submission.to_csv("./submission/core_result.csv", index=False)
