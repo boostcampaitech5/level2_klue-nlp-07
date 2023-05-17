@@ -90,16 +90,16 @@ if __name__ == "__main__":
             lr_decay=conf.params.lr_decay,
         )
     
-    wandb_logger = WandbLogger(project=conf.params.project_name, name=conf.params.test_name)
+    wandb_logger = WandbLogger(project=conf.params.project_name, name=conf.params.test_name, config=conf)
 
 
-    checkpoint_callback = ModelCheckpoint(
-            monitor="val_micro_f1",
-            dirpath="./ckpt",
-            filename="roberta-large-emb-lr_sched-{epoch:02d}-{val_micro_f1:.2f}",
-            save_top_k=1,
-            mode="max",
-        )
+    # checkpoint_callback = ModelCheckpoint(
+    #         monitor="val_micro_f1",
+    #         dirpath="./ckpt",
+    #         filename="roberta-large-emb-lr_sched-{epoch:02d}-{val_micro_f1:.2f}",
+    #         save_top_k=0,
+    #         mode="max",
+    #     )
     
     lr_monitor = LearningRateMonitor(logging_interval="step")
  
@@ -126,7 +126,8 @@ if __name__ == "__main__":
                 max_epochs=conf.params.max_epoch,
                 log_every_n_steps=1,
                 logger=wandb_logger,
-                callbacks=[checkpoint_callback, lr_monitor],
+                callbacks=[lr_monitor],
+                enable_checkpointing=False,
             )
 
             fold_dataloader = Dataloader(
@@ -154,6 +155,7 @@ if __name__ == "__main__":
             log_every_n_steps=1,
             logger=wandb_logger,
             callbacks=[lr_monitor],
+            enable_checkpointing=False,            
         )        
 
         dataloader = Dataloader(
