@@ -16,6 +16,7 @@ class Model(pl.LightningModule):
         lr=float(2e-5),
         num_labels=30,
         warmup_steps=500,
+        warmup_ratio=-1.0,
         max_training_step=4500,
         loss_type="focal",
         classifier="default",
@@ -27,6 +28,7 @@ class Model(pl.LightningModule):
         self.model_name = model_name
         self.lr = lr
         self.warmup_steps = warmup_steps
+        self.warmup_ratio = warmup_ratio
         self.max_training_step = max_training_step
         self.lr_decay = lr_decay
 

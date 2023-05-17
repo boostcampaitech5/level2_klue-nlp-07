@@ -1,0 +1,29 @@
+# config.yaml
+path:
+  train_path: ../dataset/train/train_split.csv  
+  dev_path: ../dataset/dev/dev.csv
+  test_path: ../dataset/dev/dev.csv
+  predict_path: ../dataset/test/test_data.csv
+  origin_train_path: ../dataset/train/train_preprocessing.csv # 전처리만 한 origin trainset
+
+# [klue/roberta-large, lectura/klue-roberta-large-re, studio-ousia/mluke-large]
+model_name: klue/roberta-large 
+
+params:
+  batch_size: 32                   # 배치 사이즈 [16, 32, 64, 128]
+  max_epoch: 10                    # epoch 수
+  shuffle: True                    # shuffle 여부 [True, False]
+  learning_rate: !!float 1e-5      
+  weight_decay: 0.01               # strength of weight decay
+  project_name: refactoring        # wandb 프로젝트 명
+  test_name: roberta-large-emb-lr_sched-focal-entity # wandb 테스트 명
+  num_labels: 30                   # 라벨 수
+  warmup_steps: 500                # number of warmup steps for learning rate scheduler
+  warmup_ratio: !!float 0.6        # ratio of warmup steps for learning rate scheduler    
+  loss_type: focal                 # [cross_entropy, focal, label_smoothing]
+  classifier: default              # "default" or "LSTM"
+  emb: True                        # emb 레이어 추가 여부 [True, False]
+  lr_decay: default                # warmup 스텝 [default, exp]
+  use_stratified_kfold: False      # kfold 사용 여부 [True, False]
+  num_folds: 2                     # number of folds
+  seed: 42                         # 시드 미 고정 시 : 0
