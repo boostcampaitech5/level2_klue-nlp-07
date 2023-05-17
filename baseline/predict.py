@@ -38,6 +38,7 @@ if __name__ == "__main__":
         test_path=args.test_path,
         predict_path=args.predict_path,
         emb=args.emb,
+        result_resoftmax=None,  # subject entity에 따른 결과 보정
     )
 
     model = Model.load_from_checkpoint(
@@ -50,17 +51,70 @@ if __name__ == "__main__":
 
     prediction = trainer.predict(model=model, datamodule=dataloader)
 
-    preds = []
-    probs = []
-    for item in prediction:
+    # preds = []
+    # probs = []
+    # for item in prediction:
+    #     pred = item["preds"].tolist()
+    #     prob = item["probs"]
+    #     preds += pred
+    #     probs += prob
+    # preds = num_to_label(preds)
+    # probs = [F.softmax(prob, dim=-1).tolist() for prob in probs]
+    
+    def softmax(a) :
+        exp_a = np.exp(a)
+        sum_exp_a = np.sum(exp_a)
+        y = exp_a / sum_exp_a
+    return y
+
+    test = pd.read_csv("../dataset/test/test_data.csv")
+    
+    subject_type = [] #test dataset의 subject entity를 순서대로 append
+    for i in range(len(test)):
+        subject_type.append(eval(test.loc[i, 'subject_entity'])['type'])
+    
+    new_prob = []
+    new_pred = []
+    for i in range(len(subject_type)):
+        temp = []
+        item = prediction[i]
         pred = item["preds"].tolist()
         prob = item["probs"]
-        preds += pred
-        probs += prob
-    preds = num_to_label(preds)
-    probs = [F.softmax(prob, dim=-1).tolist() for prob in probs]
+        if subject_type[i] == 'PER':
+            softmax_list = []
+            
+            for p in range(30):
+                if p in [4,5,6,10,11,12,13,14,15,16,17,21,23,24,25,26,27,29]: #per일 때
+                    softmax_list.append(prob[p])
+            softmax_list = softmax(softmax_list)
+            pp = 0
+            for p in range(30):
+                if p in [1,2,3,5,7,9,18,19,20,22,28]:
+                    temp.append(0)
+                else:
+                    temp.append(softmax_list[pp])
+                    pp+=1
+        else: #org
+            softmax_list = []
+            
+            for p in range(30):
+                if p in [1,2,3,5,7,9,18,19,20,22,28]: #org일 때
+                    softmax_list.append(prob[p])
+            softmax_list = softmax(softmax_list)
+            pp = 0
+            for p in range(30):
+                if p in [4,5,6,10,11,12,13,14,15,16,17,21,23,24,25,26,27,29]:
+                    temp.append(0)
+                else:
+                    temp.append(softmax_list[pp])
+                    pp+=1
+        new_prob.append(str(temp))
+        new_pred.append(pred)
+    preds = num_to_label(new_pred)
+    
+    
 
     submission = pd.read_csv("./submission/sample_submission.csv")
     submission["pred_label"] = preds
-    submission["probs"] = probs
+    submission["probs"] = new_prob #probs
     submission.to_csv("./submission/submission.csv", index=False)
