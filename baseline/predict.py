@@ -6,46 +6,34 @@ import torch
 from utils import num_to_label
 import pandas as pd
 import torch.nn.functional as F
+from omegaconf import OmegaConf
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--model_name", default="klue/roberta-large", type=str)
-    parser.add_argument("--batch_size", default=32, type=int)
-    parser.add_argument("--max_epoch", default=10, type=int)
-    parser.add_argument("--shuffle", default=True)
-    parser.add_argument("--learning_rate", default=1e-5, type=float)
-    parser.add_argument("--train_path", default="../dataset/train/train_split.csv")
-    parser.add_argument("--dev_path", default="../dataset/dev/dev.csv")
-    parser.add_argument("--test_path", default="../dataset/dev/dev.csv")
-    parser.add_argument("--predict_path", default="../dataset/test/test_data.csv")
-    parser.add_argument("--project_name", default="refactoring")
-    parser.add_argument("--test_name", default="roberta-large-focal-entity")
-    parser.add_argument("--num_labels", default=30)
-    parser.add_argument("--warmup_steps", default=500)
-    parser.add_argument("--loss_type", default="focal")
-    parser.add_argument("--classifier", default="default")
-    parser.add_argument("--emb", default=True)
-    parser.add_argument("--lr_decay", default="default")
-    args = parser.parse_args(args=[])
+
+    conf = OmegaConf.load("./config.yaml")
 
     dataloader = Dataloader(
-        model_name=args.model_name,
-        batch_size=args.batch_size,
-        shuffle=args.shuffle,
-        train_path=args.train_path,
-        dev_path=args.dev_path,
-        test_path=args.test_path,
-        predict_path=args.predict_path,
-        emb=args.emb,
+        model_name=conf.model_name,
+        batch_size=conf.params.batch_size,
+        shuffle=conf.params.shuffle,
+        origin_train_path=None, # Predict 시엔 None
+        train_path=conf.path.train_path,
+        dev_path=conf.path.dev_path,
+        test_path=conf.path.test_path,
+        predict_path=conf.path.predict_path,
+        emb=conf.params.emb,
+        use_stratified_kfold=None, # Predict 시엔 None
+        train_indices=None, # Predict 시엔 None
+        val_indices=None, # Predict 시엔 None    
     )
 
     model = Model.load_from_checkpoint(
-        "./ckpt/roberta-large-emb-lr_sched(exp)-epoch=05-val_micro_f1=86.56.ckpt"
+        "./ckpt/roberta-large-emb-lr_sched-epoch=01-val_micro_f1=86.09.ckpt"
     )
 
     trainer = pl.Trainer(
-        accelerator="gpu", max_epochs=args.max_epoch, log_every_n_steps=1, logger=False
+        accelerator="gpu", max_epochs=conf.params.max_epoch, log_every_n_steps=1, logger=False
     )
 
     prediction = trainer.predict(model=model, datamodule=dataloader)

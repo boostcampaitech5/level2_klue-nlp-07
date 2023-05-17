@@ -16,6 +16,7 @@ class Model(pl.LightningModule):
         lr,
         num_labels,
         warmup_steps,
+        warmup_ratio,
         max_training_step,
         loss_type,
         classifier,
@@ -27,6 +28,7 @@ class Model(pl.LightningModule):
         self.model_name = model_name
         self.lr = lr
         self.warmup_steps = warmup_steps
+        self.warmup_ratio = warmup_ratio
         self.max_training_step = max_training_step
         self.lr_decay = lr_decay
 
