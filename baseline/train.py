@@ -20,7 +20,7 @@ if __name__ == "__main__":
     if conf.params.seed > 0:
         set_seed(conf.params.seed)
 
-    # warmup_steps가 음수가 아닌 경우에만 warmup_staps 를 overwrite 합니다.    
+    # warmup_ratio 가 음수가 아닌 경우에만 warmup_staps 를 overwrite 합니다.    
     if conf.params.warmup_ratio > -1.0: # float라서 등호(=) 주의
 
         # k-fold 여부에 따라 step 수가 달라짐.
@@ -43,8 +43,7 @@ if __name__ == "__main__":
             model_name=conf.model_name,
             lr=conf.params.learning_rate,
             num_labels=conf.params.num_labels,
-            warmup_steps=conf.params.warmup_steps,       
-            warmup_ratio=conf.params.warmup_ratio,     
+            warmup_steps=conf.params.warmup_steps,        
             max_training_step=conf.params.max_epoch * 900,
             loss_type=conf.params.loss_type,
             classifier=conf.params.classifier,
