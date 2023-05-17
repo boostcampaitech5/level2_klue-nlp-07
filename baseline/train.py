@@ -9,6 +9,7 @@ from sklearn.model_selection import StratifiedKFold
 import pandas as pd
 from omegaconf import OmegaConf
 from transformers import set_seed
+import math
 
 
 if __name__ == "__main__":
@@ -19,12 +20,30 @@ if __name__ == "__main__":
     if conf.params.seed > 0:
         set_seed(conf.params.seed)
 
+    # warmup_ratio 가 음수가 아닌 경우에만 warmup_staps 를 overwrite 합니다.    
+    if conf.params.warmup_ratio > -1.0: # float라서 등호(=) 주의
+
+        # k-fold 여부에 따라 step 수가 달라짐.
+        if conf.params.use_stratified_kfold:
+            train_df = pd.read_csv(conf.path.origin_train_path) # 학습 데이터
+
+            # ((num_folds-1) x num_folds) 를 곱해줘야 함.
+            # 총 스텝 수 = 학습 데이터 개수 / 배치사이즈 x max_epoch / ((num_folds-1) x num_folds)
+            total_steps = math.ceil((len(train_df) // conf.params.batch_size) * conf.params.max_epoch * ((conf.params.num_folds - 1) / conf.params.num_folds))
+
+        else:
+            train_df = pd.read_csv(conf.path.train_path) # 학습 데이터            
+            # 총 스텝 수 = 학습 데이터 개수 / 배치사이즈 x max_epoch
+            total_steps = (len(train_df) // conf.params.batch_size) *  conf.params.max_epoch 
+ 
+        conf.params.warmup_steps = int( total_steps * conf.params.warmup_ratio)
+
+
     model = Model(
             model_name=conf.model_name,
             lr=conf.params.learning_rate,
             num_labels=conf.params.num_labels,
-            warmup_steps=conf.params.warmup_steps,       
-            warmup_ratio=conf.params.warmup_ratio,     
+            warmup_steps=conf.params.warmup_steps,        
             max_training_step=conf.params.max_epoch * 900,
             loss_type=conf.params.loss_type,
             classifier=conf.params.classifier,
