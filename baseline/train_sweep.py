@@ -39,13 +39,11 @@ if __name__ == "__main__":
         conf.params.warmup_steps = int( total_steps * conf.params.warmup_ratio)
         
     # ----------------- sweep -----------------
-    # sweep 사용시에만 실행
     sweep_conf = OmegaConf.load("./sweep.yaml")
 
-    # sweep이 넣어주는 cli 로부터 받아올 인자를 담을 set
+    # sweep.yml 의 인자를 저장할 set
     update_config_set = set()
 
-    # cli 로 들어오는 인자를 받아옵니다. (sweep.yaml 의 parameter 내부 depth 만 가져오도록 구현))
     for key, value in sweep_conf.items():       
         if "parameters" == key:
             for sub_key, sub_value in value.items():  
@@ -69,7 +67,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    # 기존 conf에 args 덮어씌움으로써 sweep의 내용들이 전달 될 수 있도록 처리 한다. 
+    # 기존 conf에 args 덮어씌움으로써 sweep의 내용들이 전달 될 수 있도록 처리
     for arg in update_config_set:
         if getattr(args, arg) is not None:
             print(getattr(args, arg))
@@ -155,7 +153,7 @@ if __name__ == "__main__":
             max_epochs=conf.params.max_epoch,
             log_every_n_steps=1,
             logger=wandb_logger,
-            callbacks=[checkpoint_callback, lr_monitor],
+            callbacks=[lr_monitor],
         )        
 
         dataloader = Dataloader(
