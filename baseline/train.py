@@ -21,7 +21,7 @@ if __name__ == "__main__":
         set_seed(conf.params.seed)
 
     # warmup_ratio 가 음수가 아닌 경우에만 warmup_staps 를 overwrite 합니다.    
-    if conf.params.warmup_ratio > -1.0: # float라서 등호(=) 주의
+    if conf.params.warmup_ratio > 0.0: # float라서 등호(=) 주의
 
         # k-fold 여부에 따라 step 수가 달라짐.
         if conf.params.use_stratified_kfold:
@@ -37,7 +37,6 @@ if __name__ == "__main__":
             total_steps = (len(train_df) // conf.params.batch_size) *  conf.params.max_epoch 
  
         conf.params.warmup_steps = int( total_steps * conf.params.warmup_ratio)
-
 
     model = Model(
             model_name=conf.model_name,
