@@ -1,0 +1,57 @@
+program: train_sweep.py
+method: bayes
+metric:
+  goal: maximize
+  name: val_micro_f1
+parameters:
+  model_name:
+    distribution: categorical
+    values:
+      - studio-ousia/mluke-large # 지은님
+      - klue/roberta-large # 재연님
+      - facebook/xlm-roberta-xl # 영준님
+      - xlm-roberta-large # 다혜님
+      - lectura/klue-roberta-large-re # 윤진님
+  classifier:
+    distribution: categorical
+    values:
+      - default
+      - LSTM
+  batch_size:
+    distribution: categorical
+    values:
+      - 16
+      - 32
+  learning_rate:
+    distribution: categorical
+    values:
+      - 1e-5
+      - 2e-5
+      - 3e-5
+      - 5e-5
+  warmup_ratio:
+    distribution: categorical
+    values:
+      - 0.1
+      - 0.2
+      - 0.6
+  max_epoch:
+    distribution: categorical
+    values:
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+  # emb:
+  #   distribution: categorical
+  #   values:
+  #     - True
+  # lr_decay:
+  #   distribution: categorical
+  #   values:
+  #     - exp
+  # loss_type:
+  #   distribution: categorical
+  #   values:
+  #     - focal  

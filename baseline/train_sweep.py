@@ -14,6 +14,10 @@ import math
 
 if __name__ == "__main__":
 
+    print("*" * 100)
+    print("train_sweep.py")
+    print("*" * 100)
+
     conf = OmegaConf.load("./config.yaml")
 
     # seed 고정
@@ -36,6 +40,47 @@ if __name__ == "__main__":
     # warmup_ratio 가 음수가 아닌 경우에만 warmup_staps 를 overwrite 합니다.    
     if conf.params.warmup_ratio > 0.0: # float라서 등호(=) 주의
         conf.params.warmup_steps = int( total_steps * conf.params.warmup_ratio)
+        
+    # ----------------- sweep -----------------
+    sweep_conf = OmegaConf.load("./sweep.yaml")
+
+    # sweep.yml 의 인자를 저장할 set
+    update_config_set = set()
+
+    for key, value in sweep_conf.items():       
+        if "parameters" == key:
+            for sub_key, sub_value in value.items():  
+                update_config_set.add(sub_key) 
+
+
+    # parser 를 통해 sweep이 전달하는 cli 를 받아오도록 처리
+    parser = argparse.ArgumentParser()
+
+    # update_config_set 에 대해서만 arg를 만들어준다.
+    for arg in update_config_set:                        
+        if arg in ["model_name", "loss_type", "classifier", "lr_decay"]:
+            parser.add_argument(f"--{arg}", type=str, default=None)
+        elif arg in ["batch_size", "max_epoch", "num_labels", "warmup_steps", "num_folds", "seed"]:
+            parser.add_argument(f"--{arg}", type=int, default=None)
+        elif arg in ["learning_rate", "weight_decay", "warmup_ratio"]:
+            parser.add_argument(f"--{arg}", type=float, default=None)
+        elif arg in ["shuffle", "emb"]:
+            parser.add_argument(f"--{arg}", type=bool, default=None)
+    
+
+    args = parser.parse_args()
+
+    # 기존 conf에 args 덮어씌움으로써 sweep의 내용들이 전달 될 수 있도록 처리
+    for arg in update_config_set:
+        if getattr(args, arg) is not None:
+            print(getattr(args, arg))
+
+            if "model_name" == arg:
+                conf.model_name = getattr(args, arg)
+            else:
+                conf.params.__setattr__(arg, getattr(args, arg))  
+
+    # ----------------- sweep -----------------
 
     model = Model(
             model_name=conf.model_name,
@@ -48,15 +93,16 @@ if __name__ == "__main__":
             lr_decay=conf.params.lr_decay,
         )
     
-    wandb_logger = WandbLogger(project=conf.params.project_name, name=conf.params.test_name)
+    wandb_logger = WandbLogger(project=conf.params.project_name, name=conf.params.test_name, config=conf)
 
-    checkpoint_callback = ModelCheckpoint(
-            monitor="val_micro_f1",
-            dirpath="./ckpt",
-            filename="roberta-large-emb-lr_sched-{epoch:02d}-{val_micro_f1:.2f}",
-            save_top_k=1,
-            mode="max",
-        )
+
+    # checkpoint_callback = ModelCheckpoint(
+    #         monitor="val_micro_f1",
+    #         dirpath="./ckpt",
+    #         filename="roberta-large-emb-lr_sched-{epoch:02d}-{val_micro_f1:.2f}",
+    #         save_top_k=0,
+    #         mode="max",
+    #     )
     
     lr_monitor = LearningRateMonitor(logging_interval="step")
  
@@ -83,7 +129,9 @@ if __name__ == "__main__":
                 max_epochs=conf.params.max_epoch,
                 log_every_n_steps=1,
                 logger=wandb_logger,
-                callbacks=[checkpoint_callback, lr_monitor],
+                callbacks=[lr_monitor],
+                enable_checkpointing=False,
+                precision="16-mixed",
             )
 
             fold_dataloader = Dataloader(
@@ -110,7 +158,9 @@ if __name__ == "__main__":
             max_epochs=conf.params.max_epoch,
             log_every_n_steps=1,
             logger=wandb_logger,
-            callbacks=[checkpoint_callback, lr_monitor],
+            callbacks=[lr_monitor],
+            enable_checkpointing=False,            
+            precision="16-mixed",            
         )        
 
         dataloader = Dataloader(
