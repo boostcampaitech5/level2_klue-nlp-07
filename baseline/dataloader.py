@@ -66,7 +66,7 @@ class Dataloader(pl.LightningDataModule):
 
     def preprocessing(self, data_path, stage):
         dataset = load_data(data_path)
-        if stage == "predict":
+        if stage == "predict" or stage == "test":
             label = []
         else:
             label = label_to_num(dataset["label"].values)
