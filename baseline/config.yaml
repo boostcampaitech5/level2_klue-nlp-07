@@ -19,7 +19,7 @@ params:
   test_name: roberta-large-emb-lr_sched-focal-entity # wandb 테스트 명
   num_labels: 30                   # 라벨 수
   warmup_steps: 500                # number of warmup steps for learning rate scheduler
-  warmup_ratio: !!float 0.1        # ratio of warmup steps for learning rate scheduler    
+  warmup_ratio: !!float 0.1        # 비활성화 시 0 이하로 설정   
   loss_type: focal                 # [cross_entropy, focal, label_smoothing]
   classifier: default              # "default" or "LSTM"
   emb: True                        # emb 레이어 추가 여부 [True, False]
