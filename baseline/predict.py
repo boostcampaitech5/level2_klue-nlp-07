@@ -25,6 +25,7 @@ if __name__ == "__main__":
         use_stratified_kfold=None,  # Predict 시엔 None
         train_indices=None,  # Predict 시엔 None
         val_indices=None,  # Predict 시엔 None
+        only_entity=False,  # CoRE predict 시에만 True
     )
 
     model = Model.load_from_checkpoint(
