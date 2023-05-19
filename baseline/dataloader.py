@@ -99,11 +99,8 @@ class Dataloader(pl.LightningDataModule):
 
     def setup(self, stage="fit"):
         if stage == "fit":
-
-
             # k-fold 시엔 즉석으로 dataset을 만들어서 사용하기 때문에 별도 처리 해준다.
             if self.use_stratified_kfold:
-
                 # 학습데이터 준비
                 origin_train_dataframe = pd.read_csv(self.origin_train_path)
 
@@ -112,10 +109,14 @@ class Dataloader(pl.LightningDataModule):
                     val_dataframe = origin_train_dataframe.iloc[self.val_indices]
 
                 # 학습데이터 준비
-                train_inputs, train_targets = self.k_fold_preprocessing(train_dataframe, "train")
-                    
+                train_inputs, train_targets = self.k_fold_preprocessing(
+                    train_dataframe, "train"
+                )
+
                 # 검증데이터 준비
-                val_inputs, val_targets = self.k_fold_preprocessing(val_dataframe, "dev")
+                val_inputs, val_targets = self.k_fold_preprocessing(
+                    val_dataframe, "dev"
+                )
 
                 # train 데이터만 shuffle을 적용해줍니다, 필요하다면 val, test 데이터에도 shuffle을 적용할 수 있습니다
                 self.train_dataset = RE_Dataset(train_inputs, train_targets, "train")
@@ -123,7 +124,9 @@ class Dataloader(pl.LightningDataModule):
 
             else:
                 # 학습데이터 준비
-                train_inputs, train_targets = self.preprocessing(self.train_path, "train")
+                train_inputs, train_targets = self.preprocessing(
+                    self.train_path, "train"
+                )
 
                 # 검증데이터 준비
                 val_inputs, val_targets = self.preprocessing(self.dev_path, "dev")

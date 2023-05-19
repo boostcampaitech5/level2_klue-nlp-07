@@ -5,7 +5,7 @@ import pickle as pickle
 import pandas as pd
 import torch
 import re
-   
+
 
 def klue_re_micro_f1(preds, labels):
     """KLUE-RE micro f1 (except no_relation)"""
@@ -144,17 +144,21 @@ def preprocessing_dataset(dataset):
         subj_end_idx = int(re.sub(r"[^0-9]", "", i[1:-1].split("'end_idx': ")[1][0:3]))
         subj_type = i[-5:-2]
         # subj.append((subj_start_idx,subj_end_idx,subj_type))
-        
+
         subj_extra_len = 3 + len(subj_type)
-        subject_entity_span.append((subj_start_idx+subj_extra_len,subj_end_idx+subj_extra_len+1))
+        subject_entity_span.append(
+            (subj_start_idx + subj_extra_len, subj_end_idx + subj_extra_len + 1)
+        )
         obj_start_idx = int(
             re.sub(r"[^0-9]", "", j[1:-1].split("'start_idx': ")[1][0:3])
         )
         obj_end_idx = int(re.sub(r"[^0-9]", "", j[1:-1].split("'end_idx': ")[1][0:3]))
         obj_type = j[-5:-2]
-        
+
         obj_extra_len = subj_extra_len + 4 + len(obj_type)
-        object_entity_span.append((obj_start_idx+obj_extra_len, obj_end_idx+obj_extra_len+1))
+        object_entity_span.append(
+            (obj_start_idx + obj_extra_len, obj_end_idx + obj_extra_len + 1)
+        )
         i = i[1:-1].split(",")[0].split(":")[1]
         j = j[1:-1].split(",")[0].split(":")[1]
 
@@ -307,13 +311,16 @@ def emb_tokenized_dataset(dataset, tokenizer):
 
     return tokenized_sentences
 
+
 def luke_tokenized_dataset(dataset, tokenizer):
     """tokenizer에 따라 sentence를 tokenizing 합니다."""
     entity_spans = []
-    
-    for subj_span, obj_span in zip(dataset["subject_entity_span"], dataset["object_entity_span"]):
+
+    for subj_span, obj_span in zip(
+        dataset["subject_entity_span"], dataset["object_entity_span"]
+    ):
         entity_spans.append([subj_span, obj_span])
-        
+
     tokenized_sentences = tokenizer(
         list(dataset["sentence"]),
         entity_spans=entity_spans,
@@ -325,6 +332,7 @@ def luke_tokenized_dataset(dataset, tokenizer):
     )
     return tokenized_sentences
 
+
 # conf 를 validation 하는 함수
 def validate_conf(conf):
     # Check other parameters as needed
@@ -334,19 +342,35 @@ def validate_conf(conf):
     assert isinstance(conf.params.learning_rate, float), "learning_rate must be a float"
     assert conf.params.learning_rate > 0, "learning_rate must be greater than 0"
     assert isinstance(conf.params.weight_decay, float), "weight_decay must be a float"
-    assert conf.params.weight_decay >= 0, "weight_decay must be greater than or equal to 0"
+    assert (
+        conf.params.weight_decay >= 0
+    ), "weight_decay must be greater than or equal to 0"
     assert isinstance(conf.params.project_name, str), "project_name must be a string"
     assert isinstance(conf.params.test_name, str), "test_name must be a string"
     assert conf.params.num_labels > 0, "num_labels must be greater than 0"
     assert conf.params.warmup_steps > 0, "warmup_steps must be greater than 0"
     assert isinstance(conf.params.warmup_ratio, float), "warmup_ratio must be a float"
     assert 0 <= conf.params.warmup_ratio <= 1, "warmup_ratio must be between 0 and 1"
-    assert conf.params.loss_type in ["cross_entropy", "focal", "label_smoothing"], "loss_type must be one of 'cross_entropy', 'focal', or 'label_smoothing'"
-    assert conf.params.classifier in ["default", "LSTM"], "classifier must be either 'default' or 'LSTM'"
+    assert conf.params.loss_type in [
+        "cross_entropy",
+        "focal",
+        "label_smoothing",
+    ], "loss_type must be one of 'cross_entropy', 'focal', or 'label_smoothing'"
+    assert conf.params.classifier in [
+        "default",
+        "LSTM",
+    ], "classifier must be either 'default' or 'LSTM'"
     assert isinstance(conf.params.emb, bool), "emb must be a boolean"
-    assert conf.params.lr_decay in ["default", "exp"], "lr_decay must be either 'default' or 'exp'"
-    assert isinstance(conf.params.use_stratified_kfold, bool), "use_stratified_kfold must be a boolean"
-    assert isinstance(conf.params.num_folds, int) and conf.params.num_folds > 0, "num_folds must be a positive integer"
+    assert conf.params.lr_decay in [
+        "default",
+        "exp",
+    ], "lr_decay must be either 'default' or 'exp'"
+    assert isinstance(
+        conf.params.use_stratified_kfold, bool
+    ), "use_stratified_kfold must be a boolean"
+    assert (
+        isinstance(conf.params.num_folds, int) and conf.params.num_folds > 0
+    ), "num_folds must be a positive integer"
     assert isinstance(conf.params.seed, int), "seed must be an integer"
 
     # Print success message with separators
