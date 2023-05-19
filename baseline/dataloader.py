@@ -39,6 +39,7 @@ class Dataloader(pl.LightningDataModule):
         use_stratified_kfold=False,  # StratifiedKFold 시엔 True
         train_indices=None,  # StratifiedKFold 시 필요한 trainset 인덱스
         val_indices=None,  # StratifiedKFold 시 필요한 valiset 인덱스
+        only_entity=False,  # CoRE predict 시에만 사용
     ):
         super().__init__()
         # tokenizer 로드
@@ -59,6 +60,7 @@ class Dataloader(pl.LightningDataModule):
         self.predict_dataset = None
 
         self.emb = emb
+        self.only_entity = only_entity
 
         self.use_stratified_kfold = use_stratified_kfold
         self.train_indices = train_indices
@@ -73,10 +75,7 @@ class Dataloader(pl.LightningDataModule):
         if "luke" in self.model_name:
             dataset_token = luke_tokenized_dataset(dataset, self.tokenizer)
         else:
-            if self.emb:
-                dataset_token = emb_tokenized_dataset(dataset, self.tokenizer)
-            else:
-                dataset_token = tokenized_dataset(dataset, self.tokenizer)
+            dataset_token = tokenized_dataset(dataset, self.tokenizer, self.only_entity)
         return dataset_token, label
 
     # k-fold 시엔 즉석으로 dataset을 만들어서 사용하기 때문에 별도 함수 만들어 줍니다.
@@ -90,20 +89,14 @@ class Dataloader(pl.LightningDataModule):
         if "luke" in self.model_name:
             dataset_token = luke_tokenized_dataset(dataset, self.tokenizer)
         else:
-            if self.emb:
-                dataset_token = emb_tokenized_dataset(dataset, self.tokenizer)
-            else:
-                dataset_token = tokenized_dataset(dataset, self.tokenizer)
+            dataset_token = tokenized_dataset(dataset, self.tokenizer, self.only_entity)
 
         return dataset_token, label
 
     def setup(self, stage="fit"):
         if stage == "fit":
-
-
             # k-fold 시엔 즉석으로 dataset을 만들어서 사용하기 때문에 별도 처리 해준다.
             if self.use_stratified_kfold:
-
                 # 학습데이터 준비
                 origin_train_dataframe = pd.read_csv(self.origin_train_path)
 
@@ -112,10 +105,14 @@ class Dataloader(pl.LightningDataModule):
                     val_dataframe = origin_train_dataframe.iloc[self.val_indices]
 
                 # 학습데이터 준비
-                train_inputs, train_targets = self.k_fold_preprocessing(train_dataframe, "train")
-                    
+                train_inputs, train_targets = self.k_fold_preprocessing(
+                    train_dataframe, "train"
+                )
+
                 # 검증데이터 준비
-                val_inputs, val_targets = self.k_fold_preprocessing(val_dataframe, "dev")
+                val_inputs, val_targets = self.k_fold_preprocessing(
+                    val_dataframe, "dev"
+                )
 
                 # train 데이터만 shuffle을 적용해줍니다, 필요하다면 val, test 데이터에도 shuffle을 적용할 수 있습니다
                 self.train_dataset = RE_Dataset(train_inputs, train_targets, "train")
@@ -123,7 +120,9 @@ class Dataloader(pl.LightningDataModule):
 
             else:
                 # 학습데이터 준비
-                train_inputs, train_targets = self.preprocessing(self.train_path, "train")
+                train_inputs, train_targets = self.preprocessing(
+                    self.train_path, "train"
+                )
 
                 # 검증데이터 준비
                 val_inputs, val_targets = self.preprocessing(self.dev_path, "dev")

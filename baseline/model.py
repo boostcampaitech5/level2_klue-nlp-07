@@ -1,6 +1,10 @@
 import pytorch_lightning as pl
 import torch
-from transformers import AutoConfig, AutoModelForSequenceClassification, LukeForEntityPairClassification
+from transformers import (
+    AutoConfig,
+    AutoModelForSequenceClassification,
+    LukeForEntityPairClassification,
+)
 from loss import FocalLoss
 from torch.optim.lr_scheduler import LambdaLR
 from torch import nn
@@ -39,10 +43,12 @@ class Model(pl.LightningModule):
         #     model_name, config=model_config
         # )
         if "luke" in model_name:
-            self.plm = LukeForEntityPairClassification.from_pretrained(model_name, config=model_config)
+            self.plm = LukeForEntityPairClassification.from_pretrained(
+                model_name, config=model_config
+            )
         else:
             self.plm = CustomRobertaForSequenceClassification.from_pretrained(
-            model_name, config=model_config
+                model_name, config=model_config
             )
         # Loss 계산을 위해 사용될 L1Loss를 호출합니다.
         if loss_type == "focal":

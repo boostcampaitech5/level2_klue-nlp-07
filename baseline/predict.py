@@ -10,22 +10,22 @@ from omegaconf import OmegaConf
 
 
 if __name__ == "__main__":
-
     conf = OmegaConf.load("./config.yaml")
 
     dataloader = Dataloader(
         model_name=conf.model_name,
         batch_size=conf.params.batch_size,
         shuffle=conf.params.shuffle,
-        origin_train_path=None, # Predict 시엔 None
+        origin_train_path=None,  # Predict 시엔 None
         train_path=conf.path.train_path,
         dev_path=conf.path.dev_path,
         test_path=conf.path.test_path,
         predict_path=conf.path.predict_path,
         emb=conf.params.emb,
-        use_stratified_kfold=None, # Predict 시엔 None
-        train_indices=None, # Predict 시엔 None
-        val_indices=None, # Predict 시엔 None    
+        use_stratified_kfold=None,  # Predict 시엔 None
+        train_indices=None,  # Predict 시엔 None
+        val_indices=None,  # Predict 시엔 None
+        only_entity=False,  # CoRE predict 시에만 True
     )
 
     model = Model.load_from_checkpoint(
@@ -33,7 +33,10 @@ if __name__ == "__main__":
     )
 
     trainer = pl.Trainer(
-        accelerator="gpu", max_epochs=conf.params.max_epoch, log_every_n_steps=1, logger=False
+        accelerator="gpu",
+        max_epochs=conf.params.max_epoch,
+        log_every_n_steps=1,
+        logger=False,
     )
 
     prediction = trainer.predict(model=model, datamodule=dataloader)
