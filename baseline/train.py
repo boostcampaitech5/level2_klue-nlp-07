@@ -110,6 +110,7 @@ if __name__ == "__main__":
                 use_stratified_kfold=conf.params.use_stratified_kfold,
                 train_indices=train_index,
                 val_indices=val_index,
+                only_entity=False,  # CoRE predict 시에만 True
             )
 
             trainer.fit(model=model, datamodule=fold_dataloader)
@@ -136,6 +137,7 @@ if __name__ == "__main__":
             use_stratified_kfold=None,  # StratifiedKFold 시엔 None
             train_indices=None,  # StratifiedKFold 시엔 None
             val_indices=None,  # StratifiedKFold 시엔 None
+            only_entity=False,  # CoRE predict 시에만 True
         )
 
         trainer.fit(model=model, datamodule=dataloader)

@@ -39,6 +39,7 @@ class Dataloader(pl.LightningDataModule):
         use_stratified_kfold=False,  # StratifiedKFold 시엔 True
         train_indices=None,  # StratifiedKFold 시 필요한 trainset 인덱스
         val_indices=None,  # StratifiedKFold 시 필요한 valiset 인덱스
+        only_entity=False,  # CoRE predict 시에만 사용
     ):
         super().__init__()
         # tokenizer 로드
@@ -59,6 +60,7 @@ class Dataloader(pl.LightningDataModule):
         self.predict_dataset = None
 
         self.emb = emb
+        self.only_entity = only_entity
 
         self.use_stratified_kfold = use_stratified_kfold
         self.train_indices = train_indices
@@ -73,10 +75,7 @@ class Dataloader(pl.LightningDataModule):
         if "luke" in self.model_name:
             dataset_token = luke_tokenized_dataset(dataset, self.tokenizer)
         else:
-            if self.emb:
-                dataset_token = emb_tokenized_dataset(dataset, self.tokenizer)
-            else:
-                dataset_token = tokenized_dataset(dataset, self.tokenizer)
+            dataset_token = tokenized_dataset(dataset, self.tokenizer, self.only_entity)
         return dataset_token, label
 
     # k-fold 시엔 즉석으로 dataset을 만들어서 사용하기 때문에 별도 함수 만들어 줍니다.
@@ -90,10 +89,7 @@ class Dataloader(pl.LightningDataModule):
         if "luke" in self.model_name:
             dataset_token = luke_tokenized_dataset(dataset, self.tokenizer)
         else:
-            if self.emb:
-                dataset_token = emb_tokenized_dataset(dataset, self.tokenizer)
-            else:
-                dataset_token = tokenized_dataset(dataset, self.tokenizer)
+            dataset_token = tokenized_dataset(dataset, self.tokenizer, self.only_entity)
 
         return dataset_token, label
 
